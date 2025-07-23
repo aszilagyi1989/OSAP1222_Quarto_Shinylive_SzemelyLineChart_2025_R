@@ -58,6 +58,8 @@ ul.task-list li input[type="checkbox"] {
 #| viewerHeight: 800
 library("shiny")
 library("dplyr")
+library("stringr")
+library("lubridate")
 library("shinyWidgets")
 library("plotly")
 library("ggplot2")
@@ -86,7 +88,12 @@ if (FALSE) {
 
    output$bordercity &lt;- renderUI({
      
-      DATA &lt;- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+    DATA &lt;- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+      
+    DATA$MHO &lt;- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE &lt;- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
+    DATA %&gt;% select(-c(TEV, MHO)) %&gt;% group_by(DATE, MG05, MG58) %&gt;% summarise(GADC041 = sum(GADC041)) %&gt;% arrange(DATE, MG05, MG58) -&gt; DATA
+
 
      selectInput(
        "bordercity",
@@ -99,7 +106,10 @@ if (FALSE) {
    
    output$search &lt;- renderUI({
      
-     DATA &lt;- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+    DATA &lt;- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+     
+    DATA$MHO &lt;- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE &lt;- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
     
     selectInput(
       "search", 
@@ -112,6 +122,9 @@ if (FALSE) {
   output$year &lt;- renderUI({
     
     DATA &lt;- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+     
+    DATA$MHO &lt;- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE &lt;- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
     
     selectInput(
       "year", 
@@ -130,6 +143,11 @@ if (FALSE) {
 
    
     DATA &lt;- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+     
+    DATA$MHO &lt;- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE &lt;- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
+    DATA %&gt;% select(-c(TEV, MHO)) %&gt;% group_by(DATE, MG05, MG58) %&gt;% summarise(GADC041 = sum(GADC041)) %&gt;% arrange(DATE, MG05, MG58) -&gt; DATA
+
 
     DATA %&gt;% filter(MG05 %in% input$bordercity)
 #     
@@ -154,7 +172,7 @@ if (FALSE) {
     
     # tryCatch({
       
-      map &lt;- ggplot(data = subsetted()) + geom_line(aes(x = MHO, y = GADC041))
+      map &lt;- ggplot(data = subsetted(), aes(DATE, GADC041, colour = MG58)) + geom_line()
       ggplotly(map) %&gt;%
         layout(xaxis = list(autorange = TRUE),
                yaxis = list(autorange = TRUE))

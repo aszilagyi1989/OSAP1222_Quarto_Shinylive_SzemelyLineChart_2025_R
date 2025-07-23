@@ -10,6 +10,8 @@ filters:
 #| viewerHeight: 800
 library("shiny")
 library("dplyr")
+library("stringr")
+library("lubridate")
 library("shinyWidgets")
 library("plotly")
 library("ggplot2")
@@ -38,7 +40,12 @@ if (FALSE) {
 
    output$bordercity <- renderUI({
      
-      DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+    DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+      
+    DATA$MHO <- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE <- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
+    DATA %>% select(-c(TEV, MHO)) %>% group_by(DATE, MG05, MG58) %>% summarise(GADC041 = sum(GADC041)) %>% arrange(DATE, MG05, MG58) -> DATA
+
 
      selectInput(
        "bordercity",
@@ -51,7 +58,10 @@ if (FALSE) {
    
    output$search <- renderUI({
      
-     DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+    DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+     
+    DATA$MHO <- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE <- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
     
     selectInput(
       "search", 
@@ -64,6 +74,9 @@ if (FALSE) {
   output$year <- renderUI({
     
     DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+     
+    DATA$MHO <- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE <- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
     
     selectInput(
       "year", 
@@ -82,6 +95,11 @@ if (FALSE) {
 
    
     DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
+     
+    DATA$MHO <- str_pad(DATA$MHO, width = 2, pad = "0")
+    DATA$DATE <- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
+    DATA %>% select(-c(TEV, MHO)) %>% group_by(DATE, MG05, MG58) %>% summarise(GADC041 = sum(GADC041)) %>% arrange(DATE, MG05, MG58) -> DATA
+
 
     DATA %>% filter(MG05 %in% input$bordercity)
 #     
@@ -106,7 +124,7 @@ if (FALSE) {
     
     # tryCatch({
       
-      map <- ggplot(data = subsetted()) + geom_line(aes(x = MHO, y = GADC041))
+      map <- ggplot(data = subsetted(), aes(DATE, GADC041, colour = MG58)) + geom_line()
       ggplotly(map) %>%
         layout(xaxis = list(autorange = TRUE),
                yaxis = list(autorange = TRUE))
