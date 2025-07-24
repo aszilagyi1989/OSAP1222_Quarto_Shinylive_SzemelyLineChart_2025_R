@@ -25,8 +25,15 @@ if (FALSE) {
    titlePanel("Személyforgalom ki- és belépők száma 2025-ben"),
    sidebarLayout(
      sidebarPanel(
+       dateRangeInput(
+          inputId = "date",
+          label = "Időszak kiválasztása",
+          start = ymd("2019-01-01"),
+          end = ymd(paste(str_sub(Sys.Date(), 1, 4), str_sub(Sys.Date(), 6, 7), "01", sep = "-")),
+          min = ymd("2019-01-01"),
+          max = ymd(paste(str_sub(Sys.Date(), 1, 4), str_sub(Sys.Date(), 6, 7), "01", sep = "-"))
+       ),
        uiOutput("bordercity"),
-       uiOutput("year"),
        uiOutput("search")
      ),
      mainPanel(
@@ -70,61 +77,47 @@ if (FALSE) {
       selected = "Összes állampolgárság")
     
   })
-  
-  output$year <- renderUI({
-    
-    DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
-     
-    DATA$MHO <- str_pad(DATA$MHO, width = 2, pad = "0")
-    DATA$DATE <- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
-    
-    selectInput(
-      "year", 
-      "Év",
-      choices = unique(DATA$TEV), 
-      selected = "2025")
-    
-  })
 
   
    subsetted <- reactive({
      
+     req(input$date)
      req(input$bordercity)
      req(input$search)
-     req(input$year)
+     
 
    
     DATA <- read.csv("https://raw.githubusercontent.com/aszilagyi1989/OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R/refs/heads/main/Data.csv", sep = ";", row.names = NULL)
      
     DATA$MHO <- str_pad(DATA$MHO, width = 2, pad = "0")
     DATA$DATE <- ymd(paste(DATA$TEV, DATA$MHO, "01", sep = ";"))
+    
+  if (input$search != "Összes állampolgárság"){
+    
+    DATA %>% select(-c(TEV, MHO)) %>% group_by(DATE, MG05, MG02, MG58) %>% summarise(GADC041 = sum(GADC041)) %>% arrange(DATE, MG05, MG02, MG58) -> DATA
+    
+    DATA %>% filter(DATE >= input$date[[1]] & DATE <= input$date[[2]] & MG02 %in% input$search & MG05 %in% input$bordercity )
+   
+  }else{
+    
     DATA %>% select(-c(TEV, MHO)) %>% group_by(DATE, MG05, MG58) %>% summarise(GADC041 = sum(GADC041)) %>% arrange(DATE, MG05, MG58) -> DATA
-
-
-    DATA %>% filter(MG05 %in% input$bordercity)
-#     
-#     if (input$search != "Magyarország"){
-# 
-#       telepules_MAP %>% filter(MUTATO_FOCSOP_MEGNEV %in% input$focsop & MUTATO_MEGNEV %in% input$mutato & VON_IDO %in% input$year & Megyenev %in% input$search)
-# 
-#     }else{
-#       
-#       telepules_MAP %>% filter(MUTATO_FOCSOP_MEGNEV %in% input$focsop & MUTATO_MEGNEV %in% input$mutato & VON_IDO %in% input$year)
-#       
-#     }
-# 
+    DATA %>% filter(DATE >= input$date[[1]] & DATE <= input$date[[2]] & MG05 %in% input$bordercity)
+    
+  }
+ 
    })
   
   
   output$linechart <- renderPlotly({
     
+     req(input$date)
      req(input$bordercity)
      req(input$search)
-     req(input$year)
+     
     
     # tryCatch({
       
-      map <- ggplot(data = subsetted(), aes(DATE, GADC041, colour = MG58)) + geom_line()
+      map <- ggplot(data = subsetted(), aes(DATE, GADC041, colour = MG58)) + geom_line() + labs(x = "Dátum", y = "Forgalom", colour = "Irány")
       ggplotly(map) %>%
         layout(xaxis = list(autorange = TRUE),
                yaxis = list(autorange = TRUE))
