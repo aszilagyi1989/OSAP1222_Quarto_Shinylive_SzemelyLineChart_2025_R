@@ -1,6 +1,9 @@
 ---
 title: ""
-format: html
+format: 
+  html:
+    resources: 
+      - shinylive-sw.js
 filters: 
  - shinylive
 ---

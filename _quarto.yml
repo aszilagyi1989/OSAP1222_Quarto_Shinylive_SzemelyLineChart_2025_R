@@ -1,5 +1,9 @@
-project:
-  title: "OSAP1222_Quarto_Shinylive_SzemelyLineChart_2025_R"
+website:
+  title: "Személy- és járműforgalmi jelentés OSAP 1222"
+  favicon: "https://map.ksh.hu/timea/images/shortcut.ico"
+  image: "https://map.ksh.hu/timea/images/shortcut.ico"
+  open-graph:
+    site-name: "Személy- és járműforgalmi jelentés OSAP 1222"
 
 
 
